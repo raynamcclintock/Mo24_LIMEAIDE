@@ -1,0 +1,46 @@
+---
+title: "Mo24_LIMEAIDE_SA"
+author: "Rayna McClintock"
+date: "2024-06-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+library(ggplot2)
+
+wax <- read_csv(here("Data","Mo24_LIMEAIDE_SA.csv"))
+```
+
+
+```{r}
+
+SA_calibration <- wax %>%
+  ggplot(aes(x = SA, y = waxweight.g)) +
+  geom_smooth(method = "lm") +
+  geom_point() 
+
+# Fit a linear model
+model <- lm(waxweight.g ~ SA, data = wax)
+
+# Summarize the model
+summary_model <- summary(model)
+
+# Extract the R-squared value
+r_squared <- summary_model$r.squared
+
+coefficients <- tidy(model)
+intercept <- as.numeric(coefficients[1, 2])
+slope <- as.numeric(coefficients[2, 2])
+
+wax$SA.cm2 <- (wax$waxweight.g + slope)/-intercept
+
+write_csv(x = wax, file = here("Data", "Mo24_LIMEAIDE_SA_calced.csv"))
+
+```
+

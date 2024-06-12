@@ -1,0 +1,191 @@
+---
+title: "Mo24_LIMEAIDE_TA"
+author: "Nyssa's version"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## process pH --- NOTE: when using markdown you want to use your chunks wisely so as to not scroll with every change.  For example have one chunck just for the data cleaning and an individual chunk for each plot.  This really uses the power of markdown so that you can write yourself good notes
+
+```{r, warning=FALSE, message=FALSE}
+## process pH
+
+library(tidyverse)
+library(seacarb)
+library(broom)
+library(lubridate)
+library(here)
+library(oce) # this is for calculating swawater density
+library(patchwork)
+here()
+
+## bring in pH calibration files and raw data files
+pHcalib <- read_csv(here("Data","TrisCalSummer2024.csv"))
+#pHcalib<-read_csv('~/Desktop/Repositories/material_legacies_indirect_effects/Data/TrisCal05_28.csv')
+pHData <- read_csv(here("Data", "Mo24_LIMEAIDE.csv"))
+#pHData<-read_csv('~/Desktop/Repositories/material_legacies_indirect_effects/Data/Community_Test_Measurements.csv')
+TAData <- read_csv(here("Data","TA_Output_Data_ALL.csv"))
+## take the mV calibration files by each date and use them to calculate pH
+SAData <- read_csv(here("Data","Mo24_LIMEAIDE_SA_calced.csv"))
+
+
+pHSlope<-pHcalib %>%
+  nest_by(TrisCalDate)%>%
+  mutate(fitpH = list(lm(mVTris~TTris, data = pHcalib))) %>% # linear regression of mV and temp of the tris
+  reframe(broom::tidy(fitpH)) %>% # make the output tidy
+  select(TrisCalDate, term, estimate) %>%
+  pivot_wider(names_from = term, values_from = estimate) %>%# put slope and intercept in their own column
+  left_join(.,pHData) %>% # join with the pH sample data
+  mutate(mVTris = TempInSample*TTris + `(Intercept)`) %>% # calculate the mV of the tris at temperature in which the pH of samples were measured
+  mutate(pH = pH(Ex=mV,Etris=mVTris,S=Salinity,T=TempInSample)) #%>% # calculate pH of the samples using the pH seacarb function
+  #mutate(pH_insitu = pHinsi(pH = pH, ALK = TA_Raw, Tinsi = TempInSitu, Tlab = Temp, S = Salinity_lab_Silbiger)) %>%
+  #mutate(pH_insi = pHinsi(pH = pH, Tinsi = TempInSitu, Tlab = TempInSample, S = Salinity, pHscale = "T" )) %>%
+  #select(Date, Rep, Treatment, TankID, Salinity,pH = pH_insi, TempInSitu, DO, DO_mg_L, Time) %>% ## need to calculate pH insi then it is done
+  #mutate(DateTime = paste(Date, Time),
+         #DateTime = ymd_hms(DateTime))
+  
+  
+View(pHSlope)
+
+## write the data
+# update daily --- Only export the files that you really need to avoid clutter.  I usually do this at the very end of all the joining, etc so that there is a single clean data file for the reviewers
+write_csv(x = pHSlope, file = here("Data", "Mo24_LIMEAIDE_pH_calced.csv"))
+
+```
+
+# Clean up the pH dataframe and join it with TA
+```{r}
+### left join the pH slope with the TA Data and the SA data 
+
+#Add in SA data
+pHSlope_SA <- left_join(pHSlope, SAData, by = "Unique_ID")
+
+
+#### I changes your file name to always be "Unique_ID" for consistency  - I also deleted the Junks and CRMs for a clean data sheet.  You can keep the other one as "RAW". I also deleted the salinity data so that it is not repeated twice and the mass data since it is not needed
+pHSlope_TA_merged <- pHSlope_SA %>%
+  left_join(TAData) %>%
+  select(Sample_ID:Volume_mL, pH, TA, SA.cm2, -mV)### remove all the extra stuff we don't need
+
+
+### Next we want to pull out all our T0 data and match them up with the appropriate dates (if you have a new T0 by run if doing multiple runs per day you would need the run info.  Because you only have one per day we can use just day and treatment)
+
+t0_data<-pHSlope_TA_merged  %>%
+  filter(T0_Tf == "T0") %>%
+  select(Date, Treatment, TA_t0 = TA,pH_t0 = pH) ## I only selected what I needed and renamed the TA and pH column to be specific to T0 so that column names are not repeated when I join everything together
+
+## Now drop the t0 data from the original data frame and perge in the new T0 dataframe such that the TA_t0 and pH_t0 are aligned with their appropriate sample data
+
+CarbChemData<-pHSlope_TA_merged %>%
+  filter(T0_Tf == "Tf") %>%
+  left_join(t0_data)  %>%### always double check that it worked in the way  you expect. Look at everything line by line
+  mutate(deltapH = pH - pH_t0,# caculate how much the pH changes over the incubation
+         deltaTA = TA_t0 - TA, # calculate how much the TA changed -- I reversed this order so that positive numbers = calcification
+         IncubationTime_hr = as.numeric(Time_Out - Time_In)/60/60, # incubation time convert to hours
+         delta_TA_hr = deltaTA/IncubationTime_hr # normalize per hour now because the blanks and samples are not perfectly the same... this is important when calculting NEC because you will already have deltaTA rates normalized to time
+         ) %>%
+  select(-T0_Tf)# drop the T0tf column since not needed anymore
+
+### Now normalize to the blank-- these are associated with a treatment and a date only because only one run per day
+Blanks <- CarbChemData %>%
+  filter(blank_coral == "blank") %>%
+  select(Date, Treatment, deltapH_blank = deltapH, delta_TA_hr_blank=delta_TA_hr)
+
+## Now just like above, we join the Blank 
+
+#SA<-1 ### DELETE THIS ONCE YOU HAVE YOUR SURFACE AREA DATA IN YOUR SHEET. MAKE SURE YOUR SA IS IN CM2 TO ALIGN WITH THE NEC EQUATION BELOW
+
+CarbChemDataRates <- CarbChemData %>%
+  filter(blank_coral == "coral") %>%
+  left_join(Blanks) %>%
+  mutate(sw_density_kg_cm3 = swRho(Salinity, TempInSample, pressure = 0)*1e-6, # this is in units of kg/m3 = convert to kg/cm3 to easily align with the data we have --  your volume is in ml = cm3 ... you need the density of seawater to convert from umol/kg to umol/L
+         NEC = ((delta_TA_hr - delta_TA_hr_blank)/2)*sw_density_kg_cm3 *Volume_mL*(1/SA.cm2), #### double check this equation and put in the correct surface area of your corals
+         delta_pH_norm = deltapH - deltapH_blank) # normalize the pH data to the blanks too
+
+## Note! coral calcification is sometimes in mmol cm-2 hr-1 which would require some conversion above.  It is important to have units on similar scale as other literature values for easy comparison in your discussion section - check the literature to see which units make the most sense... similarly some papers normalize to mm2 instead of cm2
+```
+
+# Some plots!
+
+```{r}
+## plot NEC by treatment
+
+plot_NEC<-CarbChemDataRates %>%
+  ggplot(aes(x = Meso_Treatment, fill = OAE_Treatment, y  = NEC))+
+  geom_boxplot()+
+  geom_jitter(position = position_dodge(width = 0.8))+
+  labs(x = "",
+       y = expression(paste("NEC (",mu,"mol CaCO"[3], " ", cm^-2," ",hr^-1,")")))+
+  theme_bw()
+
+plot_pH<-CarbChemDataRates %>%
+  ggplot(aes(x = Meso_Treatment, fill = OAE_Treatment, y  = delta_pH_norm))+
+  geom_boxplot()+
+  labs(x = " ",
+       y = expression(paste(Delta,pH[T])))+
+  geom_jitter(position = position_dodge(width = 0.8))+
+  theme_bw()
+
+plot_NEC + plot_pH +plot_layout(guides = "collect")
+```
+
+## Plot with NEC ~ pH with starting pH
+```{r}
+
+pH_NECall<-CarbChemDataRates %>%
+ggplot(aes(x = pH_t0, y  = NEC))+
+ geom_point(aes(color = Meso_Treatment))+
+  labs(x = expression(pH[T]),
+       y = expression(paste("NEC (",mu,"mol CaCO"[3], " ", cm^-2," ",hr^-1,")")))+
+  geom_smooth(method = "lm")+
+  theme_bw()+
+  facet_wrap(~OAE_Treatment, scale = "free")
+
+
+# Also broken up by treatment it looks like the corals in coral water look clean, but opposite if what you might expect...TAKE THIS WITH A GRAIN OF SALT BECAUSE IT IS NOT NORMALIZED! ALSO I THINK YOU HAVE MORE REPLICATES?
+
+pH_NECSplit<-CarbChemDataRates %>%
+ggplot(aes(x = pH_t0, y  = NEC))+
+ geom_point(aes(color = Meso_Treatment))+
+  labs(x = expression(pH[T]),
+       y = expression(paste("NEC (",mu,"mol CaCO"[3], " ", cm^-2," ",hr^-1,")")))+
+  geom_smooth(method = "lm")+
+  theme_bw()+
+  facet_wrap(Meso_Treatment~OAE_Treatment, scale = "free")
+
+pH_NECSplit/pH_NECall + plot_layout(guides = "collect", heights = c(3,2))
+```
+
+## plots with Ending pH
+```{r}
+
+pH_NECall2<-CarbChemDataRates %>%
+ggplot(aes(x = pH, y  = NEC))+
+ geom_point(aes(color = Meso_Treatment))+
+  labs(x = expression(pH[T]),
+       y = expression(paste("NEC (",mu,"mol CaCO"[3], " ", cm^-2," ",hr^-1,")")))+
+  geom_smooth(method = "lm")+
+  theme_bw()+
+  facet_wrap(~OAE_Treatment, scale = "free")
+
+
+# Also broken up by treatment it looks like the corals in coral water look clean, but opposite if what you might expect...TAKE THIS WITH A GRAIN OF SALT BECAUSE IT IS NOT NORMALIZED! ALSO I THINK YOU HAVE MORE REPLICATES?
+
+pH_NECSplit2<-CarbChemDataRates %>%
+ggplot(aes(x = pH, y  = NEC))+
+ geom_point(aes(color = Meso_Treatment))+
+  labs(x = expression(pH[T]),
+       y = expression(paste("NEC (",mu,"mol CaCO"[3], " ", cm^-2," ",hr^-1,")")))+
+  geom_smooth(method = "lm")+
+  theme_bw()+
+  facet_wrap(Meso_Treatment~OAE_Treatment, scale = "free")
+
+pH_NECSplit2/pH_NECall2 + plot_layout(guides = "collect", heights = c(4,2))
+```
+
+
