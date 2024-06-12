@@ -4,7 +4,7 @@
 15,3,Cntrl_Cor_T0_6_2_24,6/2/24,T0,Cntrl_Cor,Cor,Cntrl,NA,NA,NA,NA,12:29,-94.6,25.1,36.4,20240602,NA,NA,NA,power shut off before this run
 56,9,CaO_SW_T0_6_2_24,6/2/24,T0,CaO_SW,SW,CaO,NA,NA,NA,NA,12:31,-117.5,25.1,36.4,20240602,NA,NA,NA,
 39,7,CaO_Alg_T0_6_2_24,6/2/24,T0,CaO_Alg,Alg,CaO,NA,NA,NA,NA,12:33,-121.8,25.3,36.4,20240602,NA,NA,NA,
-47,8,CaO_Cor_T0_6_2_24,6/2/24,T0,CaO_Cor,cor,CaO,NA,NA,NA,NA,12:35,-113.2,25.1,36.4,20240602,NA,NA,NA,
+47,8,CaO_Cor_T0_6_2_24,6/2/24,T0,CaO_Cor,Cor,CaO,NA,NA,NA,NA,12:35,-113.2,25.1,36.4,20240602,NA,NA,NA,
 12,2,Cntrl_SW_1_a_6_2_24,6/2/24,Tf,Cntrl_SW,SW,Cntrl,coral,1_a,1,1,2:22,-98.9,27.066,36.4,20240602,12:04,14:20,167,"power shut off right at the end of this sample, looks okay"
 16,3,Cntrl_SW_blank_a_6_2_24,6/2/24,Tf,Cntrl_SW,SW,Cntrl,blank,blank_a,blank,7,2:24,-93.2,27.229,36.4,20240602,12:00,14:25,167,
 2,1,Cntrl_SW_2_e_6_2_24,6/2/24,Tf,Cntrl_SW,SW,Cntrl,coral,2_e,2,13,2:25,-103.4,27.053,36.4,20240602,12:08,14:24,171,
