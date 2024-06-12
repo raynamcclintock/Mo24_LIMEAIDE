@@ -1,0 +1,161 @@
+---
+title: "Mo24_LIMEAIDE_TA"
+author: "Rayna McClintock"
+date: "2024-06-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## process pH
+
+```{r}
+## process pH
+
+library(tidyverse)
+library(seacarb)
+library(broom)
+library(lubridate)
+library(here)
+here()
+## bring in pH calibration files and raw data files
+pHcalib<-read_csv(here("Data","TrisCalSummer2024.csv"))
+
+#pHcalib<-read_csv('~/Desktop/Repositories/material_legacies_indirect_effects/Data/TrisCal05_28.csv')
+pHData<-read_csv(here("Data", "Mo24_LIMEAIDE.csv"))
+#pHData<-read_csv('~/Desktop/Repositories/material_legacies_indirect_effects/Data/Community_Test_Measurements.csv')
+TAData<-read_csv(here("Data","TA_Output_Data_ALL.csv"))
+## take the mV calibration files by each date and use them to calculate pH
+
+pHSlope<-pHcalib %>%
+  nest_by(TrisCalDate)%>%
+  mutate(fitpH = list(lm(mVTris~TTris, data = pHcalib))) %>% # linear regression of mV and temp of the tris
+  reframe(broom::tidy(fitpH)) %>% # make the output tidy
+  select(TrisCalDate, term, estimate) %>%
+  pivot_wider(names_from = term, values_from = estimate) %>%# put slope and intercept in their own column
+  left_join(.,pHData) %>% # join with the pH sample data
+  mutate(mVTris = TempInSample*TTris + `(Intercept)`) %>% # calculate the mV of the tris at temperature in which the pH of samples were measured
+  mutate(pH = pH(Ex=mV,Etris=mVTris,S=Salinity,T=TempInSample)) #%>% # calculate pH of the samples using the pH seacarb function
+  #mutate(pH_insitu = pHinsi(pH = pH, ALK = TA_Raw, Tinsi = TempInSitu, Tlab = Temp, S = Salinity_lab_Silbiger)) %>%
+  #mutate(pH_insi = pHinsi(pH = pH, Tinsi = TempInSitu, Tlab = TempInSample, S = Salinity, pHscale = "T" )) %>%
+  #select(Date, Rep, Treatment, TankID, Salinity,pH = pH_insi, TempInSitu, DO, DO_mg_L, Time) %>% ## need to calculate pH insi then it is done
+  #mutate(DateTime = paste(Date, Time),
+         #DateTime = ymd_hms(DateTime))
+  
+  
+View(pHSlope)
+
+## write the data
+# update daily
+write_csv(x = pHSlope, file = here("Data", "Mo24_LIMEAIDE_pH_calced.csv"))
+
+
+pHSlope_TA_merged <- merge(pHSlope, TAData, by.x = "Unique_ID", by.y = "SampleID")
+write_csv(x = pHSlope_TA_merged, file = here("Data", "Mo24_LIMEAIDE_pH_TA.csv"))
+
+#Look at some plots!
+
+pH_plot <- pHSlope %>%
+  ggplot(aes(x = Treatment, y = pH, color = Treatment, group = Treatment, shape = T0_Tf)) + 
+  geom_boxplot() +
+  geom_point() +
+  facet_wrap(~T0_Tf)
+
+pH_plot_blanks <- pHSlope %>%
+  ggplot(aes(x = Treatment, y = pH, color = Treatment, group = Treatment, shape = T0_Tf)) + 
+  geom_boxplot() +
+  geom_point() +
+  facet_wrap(~blank_coral)
+
+mean_pH_plot <- pHSlope %>%
+  group_by(Treatment, Date) %>%
+  summarise(meanpH = mean(pH, na.rm = TRUE), 
+            sepH = sd(pH, na.rm = TRUE)/sqrt(n()))%>%
+  ggplot(aes(x = Treatment, y = meanpH, color = Treatment, group = Treatment)) + 
+  geom_point() +
+  geom_errorbar( aes(ymin = meanpH - sepH, ymax = meanpH + sepH), width = 0.1)+
+  geom_line() 
+
+
+mean_pH_plot_date <- pHSlope %>%
+  group_by(Treatment, Date) %>%
+  summarise(meanpH = mean(pH, na.rm = TRUE), 
+            sepH = sd(pH, na.rm = TRUE)/sqrt(n()))%>%
+  ggplot(aes(x = Treatment, y = meanpH, color = Treatment, group = Treatment)) + 
+  geom_point() +
+  geom_errorbar( aes(ymin = meanpH - sepH, ymax = meanpH + sepH), width = 0.1)+
+  geom_line() +
+  facet_wrap(~Date, scale = "free")
+
+
+
+
+ggsave(plot = pH_plot, filename = here("Output", "pH_plot.png"), width = 9, height = 6)
+
+
+
+```
+
+## add in TA
+
+```{r cars}
+library(tidyverse)
+library(seacarb)
+library(broom)
+library(lubridate)
+library(here)
+here()
+
+## bring in pH calibration files and raw data files
+#TA_Data <- read_csv(here("Data","Mo24_LIMEAIDE_Analysis.csv"))
+TA_data <- read_csv(here("Data","Mo24_LIMEAIDE_pH_TA.csv"))
+
+TA_data <- TA_data %>% select(-TrisCalDate, -"(Intercept)", -TTris, -Salinity.y)
+TA_data <- TA_data %>% rename(Salinity = Salinity.x)
+```
+
+## make some plots
+
+```{r}
+
+
+# Convert the times to POSIXct objects
+TA_data$start_time <- as.POSIXct(TA_data$Time_In, format="%H:%M:%S")
+TA_data$end_time <- as.POSIXct(TA_data$Time_Out, format="%H:%M:%S")
+
+# Calculate the difference in minutes
+TA_data$chamber_time <- difftime(TA_data$end_time, TA_data$start_time, units="mins")
+TA_data$chamber_time <- gsub(" mins", "", TA_data$chamber_time)
+TA_data$chamber_time <- as.factor(TA_data$chamber_time)
+
+
+TA_plot <- TA_data %>%
+    ggplot(aes(x = Treatment, y = TA, color = Treatment, group = Treatment)) + 
+  geom_point() +
+  geom_boxplot()
+
+
+#remove blanks and T0
+corals <- TA_data[TA_data$blank_coral == "coral", ]
+
+
+TA_all_plot <- corals %>%
+    ggplot(aes(x = Treatment, y = TA, color = Treatment, group = Treatment)) + 
+  geom_boxplot() +
+  geom_point() 
+
+
+
+
+
+```
+
+
+
+```{r}
+
+
+```
+
