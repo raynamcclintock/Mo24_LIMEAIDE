@@ -1,7 +1,7 @@
 ---
 title: "Mo24_LIMEAIDE_TA"
-author: "Nyssa's version"
-date: "`r Sys.Date()`"
+author: "Rayna's version incorporating Nyssas code and comments"
+date: "June 9th 2024"
 output: html_document
 ---
 
@@ -104,8 +104,11 @@ CarbChemDataRates <- CarbChemData %>%
   filter(blank_coral == "coral") %>%
   left_join(Blanks) %>%
   mutate(sw_density_kg_cm3 = swRho(Salinity, TempInSample, pressure = 0)*1e-6, # this is in units of kg/m3 = convert to kg/cm3 to easily align with the data we have --  your volume is in ml = cm3 ... you need the density of seawater to convert from umol/kg to umol/L
-         NEC = ((delta_TA_hr - delta_TA_hr_blank)/2)*sw_density_kg_cm3 *Volume_mL*(1/SA.cm2), #### double check this equation and put in the correct surface area of your corals
-         delta_pH_norm = deltapH - deltapH_blank) # normalize the pH data to the blanks too
+         #NEC = ((delta_TA_hr - delta_TA_hr_blank)/2)*sw_density_kg_cm3 *Volume_mL*(1/SA.cm2), #### double check this equation and put in the correct surface area of your corals
+         NEC = ((delta_TA_hr - delta_TA_hr_blank)*sw_density_kg_cm3 *Volume_mL)/(2*SA.cm2),
+         delta_pH_norm = deltapH - deltapH_blank, # normalize the pH data to the blanks too
+         NEC_par = ((delta_TA_hr - delta_TA_hr_blank)*sw_density_kg_cm3 *Volume_mL)/(2*SA.cm2*PAR))
+        
 
 ## Note! coral calcification is sometimes in mmol cm-2 hr-1 which would require some conversion above.  It is important to have units on similar scale as other literature values for easy comparison in your discussion section - check the literature to see which units make the most sense... similarly some papers normalize to mm2 instead of cm2
 ```
