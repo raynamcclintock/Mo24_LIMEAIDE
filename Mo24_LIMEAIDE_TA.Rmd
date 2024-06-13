@@ -110,7 +110,121 @@ CarbChemDataRates <- CarbChemData %>%
 ## Note! coral calcification is sometimes in mmol cm-2 hr-1 which would require some conversion above.  It is important to have units on similar scale as other literature values for easy comparison in your discussion section - check the literature to see which units make the most sense... similarly some papers normalize to mm2 instead of cm2
 ```
 
-# Some plots!
+## Some plots!
+
+## Plot of starting TA and pH by Treatment
+
+```{r}
+# Set the order of the levels
+t0_data$Treatment <- factor(t0_data$Treatment, levels = c("CaO_Cor", "CaO_Alg", "CaO_SW", "Cntrl_Cor", "Cntrl_Alg", "Cntrl_SW"))
+CarbChemDataRates$Meso_Treatment <- factor(CarbChemDataRates$Meso_Treatment, levels = c("Cor", "Alg", "SW"))
+
+
+plot_TA_t0 <- t0_data %>%
+  ggplot(aes(x = Treatment, fill = Treatment, y  = TA_t0))+
+  geom_boxplot()+
+  geom_jitter(position = position_dodge(width = 0.8))+
+  labs(x = "Treatment",
+       y = "Initial TA (umol/kg)") +
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+plot_pH_t0 <- t0_data %>%
+  ggplot(aes(x = Treatment, fill = Treatment, y  = pH_t0))+
+  geom_boxplot()+
+  geom_jitter(position = position_dodge(width = 0.8))+
+  labs(x = "Treatment",
+       y = "Initial pH") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+plot_TA_t0 + plot_pH_t0 + plot_layout(guides = "collect")
+
+```
+
+## Look at just the Cntrl Treatments to get a baseline calcification rate
+```{r}
+## plot NEC by treatment
+
+CarbChemDataRates_cntrl <- CarbChemDataRates[CarbChemDataRates$OAE_Treatment=="Cntrl", ]
+
+plot_NEC_cntrl<-CarbChemDataRates_cntrl %>%
+  ggplot(aes(x = Meso_Treatment, fill = Meso_Treatment, y  = NEC))+
+  geom_boxplot()+
+  geom_jitter(position = position_dodge(width = 0.8))+
+  labs(x = "",
+       y = expression(paste("NEC (",mu,"mol CaCO"[3], " ", cm^-2," ",hr^-1,")")))+
+  theme_bw() 
+
+plot_pH_cntrl<-CarbChemDataRates_cntrl %>%
+  ggplot(aes(x = Meso_Treatment, fill = Meso_Treatment, y  = delta_pH_norm))+
+  geom_boxplot()+
+  labs(x = " ",
+       y = expression(paste(Delta,pH[T])))+
+  geom_jitter(position = position_dodge(width = 0.8))+
+  theme_bw()
+
+plot_NEC_cntrl + plot_pH_cntrl + plot_layout(guides = "collect")
+
+```
+
+## See if there is a major colony effect
+```{r}
+## plot NEC by treatment
+# Set the order of the levels
+CarbChemDataRates$Meso_Treatment <- factor(CarbChemDataRates$Meso_Treatment, levels = c("Cor", "Alg", "SW"))
+
+CarbChemDataRates_cntrl <- CarbChemDataRates[CarbChemDataRates$OAE_Treatment=="Cntrl", ]
+
+plot_NEC_cntrl_colony<-CarbChemDataRates_cntrl %>%
+  ggplot(aes(x = Meso_Treatment, fill = Meso_Treatment, y  = NEC))+
+  geom_boxplot()+
+  geom_jitter(position = position_dodge(width = 0.8))+
+  labs(x = "",
+       y = expression(paste("NEC (",mu,"mol CaCO"[3], " ", cm^-2," ",hr^-1,")")))+
+  theme_bw() +
+  facet_wrap(~Colony)
+
+plot_pH_cntrl_colony<-CarbChemDataRates_cntrl %>%
+  ggplot(aes(x = Meso_Treatment, fill = Meso_Treatment, y  = delta_pH_norm))+
+  geom_boxplot()+
+  labs(x = " ",
+       y = expression(paste(Delta,pH[T])))+
+  geom_jitter(position = position_dodge(width = 0.8))+
+  theme_bw() +
+  facet_wrap(~Colony)
+
+plot_NEC_cntrl_colony + plot_pH_cntrl_colony + plot_layout(guides = "collect")
+
+```
+
+## Look at just the CaO Treatments to see what that looks like
+```{r}
+## plot NEC by treatment
+
+CarbChemDataRates_CaO <- CarbChemDataRates[CarbChemDataRates$OAE_Treatment=="CaO", ]
+
+plot_NEC_cao<-CarbChemDataRates_CaO %>%
+  ggplot(aes(x = Meso_Treatment, fill = Meso_Treatment, y  = NEC))+
+  geom_boxplot()+
+  geom_jitter(position = position_dodge(width = 0.8))+
+  labs(x = "",
+       y = expression(paste("NEC (",mu,"mol CaCO"[3], " ", cm^-2," ",hr^-1,")")))+
+  theme_bw() 
+
+plot_pH_cao<-CarbChemDataRates_CaO %>%
+  ggplot(aes(x = Meso_Treatment, fill = Meso_Treatment, y  = delta_pH_norm))+
+  geom_boxplot()+
+  labs(x = " ",
+       y = expression(paste(Delta,pH[T])))+
+  geom_jitter(position = position_dodge(width = 0.8))+
+  theme_bw()
+
+plot_NEC_cao + plot_pH_cao + plot_layout(guides = "collect")
+
+```
+
+## Plot of NEC and delta pH by treatment
 
 ```{r}
 ## plot NEC by treatment
@@ -132,6 +246,7 @@ plot_pH<-CarbChemDataRates %>%
   theme_bw()
 
 plot_NEC + plot_pH +plot_layout(guides = "collect")
+
 ```
 
 ## Plot with NEC ~ pH with starting pH
@@ -140,7 +255,7 @@ plot_NEC + plot_pH +plot_layout(guides = "collect")
 pH_NECall<-CarbChemDataRates %>%
 ggplot(aes(x = pH_t0, y  = NEC))+
  geom_point(aes(color = Meso_Treatment))+
-  labs(x = expression(pH[T]),
+  labs(x = expression(pH[0]),
        y = expression(paste("NEC (",mu,"mol CaCO"[3], " ", cm^-2," ",hr^-1,")")))+
   geom_smooth(method = "lm")+
   theme_bw()+
@@ -152,14 +267,38 @@ ggplot(aes(x = pH_t0, y  = NEC))+
 pH_NECSplit<-CarbChemDataRates %>%
 ggplot(aes(x = pH_t0, y  = NEC))+
  geom_point(aes(color = Meso_Treatment))+
-  labs(x = expression(pH[T]),
+  labs(x = expression(pH[0]),
        y = expression(paste("NEC (",mu,"mol CaCO"[3], " ", cm^-2," ",hr^-1,")")))+
   geom_smooth(method = "lm")+
   theme_bw()+
   facet_wrap(Meso_Treatment~OAE_Treatment, scale = "free")
 
 pH_NECSplit/pH_NECall + plot_layout(guides = "collect", heights = c(3,2))
+
+
 ```
+
+```{r}
+
+pH_NEC_combined <-CarbChemDataRates %>%
+ggplot(aes(x = pH_t0, y  = NEC))+
+ geom_point(aes(color = OAE_Treatment))+
+  labs(x = expression(pH[0]),
+       y = expression(paste("NEC (",mu,"mol CaCO"[3], " ", cm^-2," ",hr^-1,")")))+
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2))+
+  theme_bw()
+
+pH_NEC_combined1.0 <-CarbChemDataRates %>%
+ggplot(aes(x = NEC, y  = pH_t0))+
+ geom_point(aes(color = OAE_Treatment))+
+  labs(y = expression(pH[f]),
+       x = expression(paste("NEC (",mu,"mol CaCO"[3], " ", cm^-2," ",hr^-1,")")))+
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2))+
+  theme_bw()
+
+
+```
+
 
 ## plots with Ending pH
 ```{r}
@@ -167,7 +306,7 @@ pH_NECSplit/pH_NECall + plot_layout(guides = "collect", heights = c(3,2))
 pH_NECall2<-CarbChemDataRates %>%
 ggplot(aes(x = pH, y  = NEC))+
  geom_point(aes(color = Meso_Treatment))+
-  labs(x = expression(pH[T]),
+  labs(x = expression(pH[f]),
        y = expression(paste("NEC (",mu,"mol CaCO"[3], " ", cm^-2," ",hr^-1,")")))+
   geom_smooth(method = "lm")+
   theme_bw()+
@@ -179,13 +318,64 @@ ggplot(aes(x = pH, y  = NEC))+
 pH_NECSplit2<-CarbChemDataRates %>%
 ggplot(aes(x = pH, y  = NEC))+
  geom_point(aes(color = Meso_Treatment))+
-  labs(x = expression(pH[T]),
+  labs(x = expression(pH[f]),
        y = expression(paste("NEC (",mu,"mol CaCO"[3], " ", cm^-2," ",hr^-1,")")))+
   geom_smooth(method = "lm")+
   theme_bw()+
   facet_wrap(Meso_Treatment~OAE_Treatment, scale = "free")
 
 pH_NECSplit2/pH_NECall2 + plot_layout(guides = "collect", heights = c(4,2))
+
+
+```
+
+```{r}
+
+pH_NEC_combined2 <-CarbChemDataRates %>%
+ggplot(aes(x = pH, y  = NEC))+
+ geom_point(aes(color = OAE_Treatment))+
+  labs(x = expression(pH[f]),
+       y = expression(paste("NEC (",mu,"mol CaCO"[3], " ", cm^-2," ",hr^-1,")")))+
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2))+
+  theme_bw()
+
+pH_NEC_combined2.0 <-CarbChemDataRates %>%
+ggplot(aes(x = NEC, y  = pH))+
+ geom_point(aes(color = OAE_Treatment))+
+  labs(y = expression(pH[f]),
+       x = expression(paste("NEC (",mu,"mol CaCO"[3], " ", cm^-2," ",hr^-1,")")))+
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2))+
+  theme_bw()
+
+
 ```
 
 
+## plots with delta pH
+```{r}
+
+pH_NECall3<-CarbChemDataRates %>%
+ggplot(aes(x = delta_pH_norm, y  = NEC))+
+ geom_point(aes(color = Meso_Treatment))+
+  labs(x = expression(pH[delta]),
+       y = expression(paste("NEC (",mu,"mol CaCO"[3], " ", cm^-2," ",hr^-1,")")))+
+  geom_smooth(method = "lm")+
+  theme_bw()+
+  facet_wrap(~OAE_Treatment, scale = "free")
+
+
+# Also broken up by treatment it looks like the corals in coral water look clean, but opposite if what you might expect...TAKE THIS WITH A GRAIN OF SALT BECAUSE IT IS NOT NORMALIZED! ALSO I THINK YOU HAVE MORE REPLICATES?
+
+pH_NECSplit3<-CarbChemDataRates %>%
+ggplot(aes(x = delta_pH_norm, y  = NEC))+
+ geom_point(aes(color = Meso_Treatment))+
+  labs(x = expression(pH[delta]),
+       y = expression(paste("NEC (",mu,"mol CaCO"[3], " ", cm^-2," ",hr^-1,")")))+
+  geom_smooth(method = "lm")+
+  theme_bw()+
+  facet_wrap(Meso_Treatment~OAE_Treatment, scale = "free")
+
+pH_NECSplit3/pH_NECall3 + plot_layout(guides = "collect", heights = c(4,2))
+
+
+```
