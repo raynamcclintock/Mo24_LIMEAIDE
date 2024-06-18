@@ -2,7 +2,9 @@
 title: "Mo24_LIMEAIDE_TA"
 author: "Rayna's version incorporating Nyssas code and comments"
 date: "June 9th 2024"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -11,7 +13,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```
 
-## process pH --- NOTE: when using markdown you want to use your chunks wisely so as to not scroll with every change.  For example have one chunck just for the data cleaning and an individual chunk for each plot.  This really uses the power of markdown so that you can write yourself good notes
 
 ```{r, warning=FALSE, message=FALSE}
 ## process pH
