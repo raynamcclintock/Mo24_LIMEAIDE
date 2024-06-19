@@ -1,0 +1,137 @@
+---
+title: "Mo24_LIMEAIDE_respo"
+author: "Rayna McClintock"
+date: "2024-06-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+## process pH
+
+library(tidyverse)
+library(seacarb)
+library(broom)
+library(lubridate)
+library(here)
+library(oce) # this is for calculating swawater density
+library(patchwork)
+here()
+
+## bring in the calculated respo file
+data <- read_csv(here("Data", "respo_output","PR_initial_normalized_2024.csv"))
+
+```
+
+```{r}
+
+plot_respo_all <- data %>%
+  ggplot(aes(x = OAE_Treatment, fill = OAE_Treatment, y  = umol.sec.corr))+
+  geom_boxplot()+
+  geom_jitter(position = position_dodge(width = 0.8))+
+  labs(x = "",
+       y = "Net Primary Productivity") +
+  theme_bw()
+
+plot_respo_treatment <- data %>%
+  ggplot(aes(x = Treatment, fill = Treatment, y  = umol.sec.corr))+
+  geom_boxplot()+
+  geom_jitter(position = position_dodge(width = 0.8))+
+  labs(x = "",
+       y = "Net Primary Productivity") +
+  theme_bw()
+
+# Perform ANOVA
+anova_result <- aov(umol.sec.corr ~ OAE_Treatment, data = data)
+
+# View summary of ANOVA
+summary(anova_result)
+
+
+```
+
+```{r}
+
+data_SW <- data[data$Meso_Treatment =="SW",]
+
+plot_respo_SW <- data_SW %>%
+  ggplot(aes(x = OAE_Treatment, fill = OAE_Treatment, y  = umol.sec.corr))+
+  geom_boxplot()+
+  geom_jitter(position = position_dodge(width = 0.8))+
+  labs(x = "",
+       y = "Net Primary Productivity umol.sec") +
+  theme_bw()
+
+# Perform ANOVA
+anova_result <- aov(umol.sec.corr ~ OAE_Treatment, data = data_SW)
+
+# View summary of ANOVA
+summary(anova_result)
+
+```
+
+```{r}
+
+data_subset <- data[data$Frag_ID != "6_e", ]
+data_6_3 <- data[data$Date == "6/3/24", ]
+
+plot_respo_all <- data_subset %>%
+  ggplot(aes(x = OAE_Treatment, fill = OAE_Treatment, y  = mmol.gram.hr.corr))+
+  geom_boxplot()+
+  geom_jitter(position = position_dodge(width = 0.8))+
+  labs(x = "",
+       y = "Net Primary Productivity") +
+  theme_bw() +
+  facet_wrap(~ Date)
+
+plot_respo_treatment <- data_subset %>%
+  ggplot(aes(x = Treatment, fill = Treatment, y  = mmol.gram.hr.corr))+
+  geom_boxplot()+
+  geom_jitter(position = position_dodge(width = 0.8))+
+  labs(x = "",
+       y = "Net Primary Productivity") +
+  theme_bw() +
+  facet_wrap(~ Date)
+
+# Perform ANOVA
+anova_result <- aov(mmol.gram.hr.corr ~ OAE_Treatment, data = data_6_3)
+
+# View summary of ANOVA
+summary(anova_result)
+
+
+
+
+```
+
+
+
+```{r}
+
+data_SW <- data[data$Meso_Treatment =="SW",]
+data_SW_6_3 <- data_SW[data_SW$Date == "6/3/24", ]
+data_SW <- data_SW[data_SW$Frag_ID != "6_e", ]
+
+plot_respo_SW <- data_SW %>%
+  ggplot(aes(x = OAE_Treatment, fill = OAE_Treatment, y  = mmol.gram.hr.corr))+
+  geom_boxplot()+
+  geom_jitter(position = position_dodge(width = 0.8))+
+  labs(x = "",
+       y = "Net Primary Productivity mmol.gram.hr.corr") +
+  theme_bw() +
+  facet_wrap(~ Date)
+
+# Perform ANOVA
+anova_result <- aov(mmol.gram.hr.corr ~ OAE_Treatment, data = data_SW_6_3)
+
+# View summary of ANOVA
+summary(anova_result)
+
+```
+
+
+
