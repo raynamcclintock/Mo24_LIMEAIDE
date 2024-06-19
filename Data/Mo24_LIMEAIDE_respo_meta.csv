@@ -1,0 +1,19 @@
+﻿order,FileName,Unique_ID,TA_Run,Sample_ID,Date,T0_Tf,Treatment,Meso_Treatment,OAE_Treatment,blank_coral,Frag_ID,Colony,Chamber,Channel,PAR,Time_Measure,mV,TempInSample,Salinity,TrisCalDate,Time_In,Time_Out,Volume_mL,start.time,stop.time,Notes
+31,LIMEAIDE_light_ch1_blank_a_6_3_24_O2,40,7,CaO_Cor_Tf_blank_a_6_3_24,6/3/24,Tf,CaO_Cor,Cor,CaO,blank,k_a,blank,1,1,414,2:35,-115.9,27.214,36.4,20240602,12:00,14:30,201,12:30,13:20,
+37,LIMEAIDE_light_ch4_4_c_6_3_24_O2,51,8,CaO_SW_Tf_4_c_6_3_24,6/3/24,Tf,CaO_SW,SW,CaO,coral,4_c,4,3,4,526,2:40,-117.6,27.114,36.4,20240602,12:00,14:40,182,12:30,13:20,CaO_test_1
+40,LIMEAIDE_light_ch7_4_d_6_3_24_O2,21,4,Cntrl_SW_Tf_4_d_6_3_24,6/3/24,Tf,Cntrl_SW,SW,Cntrl,coral,4_d,4,4,7,528,2:25,-106.8,27.514,36.4,20240602,12:00,14:24,184,12:30,13:20,
+64,LIMEAIDE_light_ch1_blank_d_6_4_24_O2,62,10,CaO_Cor_Tf_blank_d_6_4_24,6/4/24,Tf,CaO_Cor,Cor,CaO,blank,blank_d,blank,4,1,528,2:34,-119.7,27.582,36.4,20240602,12:00,14:20,201,12:24,14:00,
+67,LIMEAIDE_light_ch4_6_e_6_4_24_O2,27,5,Cntrl_SW_Tf_6_e_6_4_24,6/4/24,Tf,Cntrl_SW,SW,Cntrl,coral,6_e,6,5,4,484,2:26,-87.2,27.648,36.4,20240602,11:59,14:25,181,12:24,14:00,
+70,LIMEAIDE_light_ch7_6_f_6_4_24_O2,61,10,CaO_SW_Tf_6_f_6_4_24,6/4/24,Tf,CaO_SW,SW,CaO,coral,6_f,6,6,7,428,2:39,-112.2,27.321,36.4,20240602,11:59,14:38,196,12:24,14:00,
+32,LIMEAIDE_light_ch2_3_a_6_3_24_O2,41,7,CaO_Cor_Tf_3_a_6_3_24,6/3/24,Tf,CaO_Cor,Cor,CaO,coral,3_a,3,7,2,407,2:38,-118,27.102,36.4,20240602,11:58,14:37,194,12:30,13:20,
+38,LIMEAIDE_light_ch5_blank_c_6_3_24_O2,50,8,CaO_SW_Tf_blank_c_6_3_24,6/3/24,Tf,CaO_SW,SW,CaO,blank,k_c,blank,9,5,508,2:41,-115.6,27.46,36.4,20240602,12:00,14:30,201,12:30,13:20,
+41,LIMEAIDE_light_ch8_blank_d_6_3_24_O2,22,4,Cntrl_SW_Tf_blank_d_6_3_24,6/3/24,Tf,Cntrl_SW,SW,Cntrl,blank,k_d,blank,10,8,515,2:26,-93.3,27.588,36.4,20240602,12:00,14:30,201,12:30,13:20,
+65,LIMEAIDE_light_ch2_5_d_6_4_24_O2,66,10,CaO_Cor_Tf_5_d_6_4_24,6/4/24,Tf,CaO_Cor,Cor,CaO,coral,5_d,5,10,2,515,2:36,-119.6,27.433,36.4,20240602,11:57,14:35,194,12:24,14:00,
+68,LIMEAIDE_light_ch5_blank_e_6_4_24_O2,30,5,Cntrl_SW_Tf_blank_e_6_4_24,6/4/24,Tf,Cntrl_SW,SW,Cntrl,blank,blank_e,blank,11,5,482,2:27,-87.2,27.85,36.4,20240602,12:00,14:20,199,12:24,14:00,rerun (30_rerun) weight was only 54.964
+71,LIMEAIDE_light_ch8_blank_f_6_4_24_O2,68,10,CaO_SW_Tf_blank_f_6_4_24,6/4/24,Tf,CaO_SW,SW,CaO,blank,blank_f,blank,12,8,425,2:40,-114.5,27.551,36.4,20240602,12:00,14:20,197,12:24,14:00,
+33,LIMEAIDE_light_ch3_4_a_6_3_24_O2,44,7,CaO_Cor_Tf_4_a_6_3_24,6/3/24,Tf,CaO_Cor,Cor,CaO,coral,4_a,4,13,3,369,2:39,-120,27.229,36.4,20240602,12:00,14:38,175,12:30,13:20,
+39,LIMEAIDE_light_ch6_3_c_6_3_24_O2,55,9,CaO_SW_Tf_3_c_6_3_24,6/3/24,Tf,CaO_SW,SW,CaO,coral,3_c,3,15,6,477,2:43,-118.4,27.091,36.4,20240602,11:58,14:43,181,12:30,13:20,
+42,LIMEAIDE_light_ch9_3_d_6_3_24_O2,4,1,Cntrl_SW_Tf_3_d_6_3_24,6/3/24,Tf,Cntrl_SW,SW,Cntrl,coral,3_d,3,16,9,479,2:28,-99.1,27.454,36.4,20240602,11:58,14:27,199,12:30,13:20,
+66,LIMEAIDE_light_ch3_6_d_6_4_24_O2,69,11,CaO_Cor_Tf_6_d_6_4_24,6/4/24,Tf,CaO_Cor,Cor,CaO,coral,6_d,6,16,3,479,2:37,-109,27.468,36.4,20240602,11:59,14:37,184,12:24,14:00,"looked low, redo"
+69,LIMEAIDE_light_ch6_5_e_6_4_24_O2,32,5,Cntrl_SW_Tf_5_e_6_4_24,6/4/24,Tf,Cntrl_SW,SW,Cntrl,coral,5_e,5,17,6,438,2:29,-94.2,27.738,36.4,20240602,11:57,14:29,177,12:24,14:00,
+72,LIMEAIDE_light_ch9_blank_f_6_4_24_O2,67,10,CaO_SW_Tf_5_f_6_4_24,6/4/24,Tf,CaO_SW,SW,CaO,coral,5_f,5,18,9,382,2:42,-117.2,27.419,36.4,20240602,11:57,14:41,190,12:24,14:00,

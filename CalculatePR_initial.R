@@ -32,7 +32,7 @@ library("patchwork")
 
 
 #set the path to all of the raw oxygen datasheets
-path.p<-here("respo") #the location of all your respirometry files
+path.p<-here("/Users/rayna/Library/Mobile Documents/com~apple~CloudDocs/Documents/GitHub/Mo24_LIMEAIDE/Data/respo") #the location of all your respirometry files
 
 # bring in all of the individual files
 file.names<-basename(list.files(path = path.p, pattern = "csv$", recursive = TRUE)) #list all csv file names in the folder and subfolders
@@ -47,7 +47,10 @@ colnames(Respo.R) <- c("FileName","Intercept", "umol.L.sec","Temp.C")
 #View(Respo.R)
 
 #Load your respiration data file, with all the times, water volumes(mL), algal biomass weight (dry weight) (g)
-Sample.Info <- read.csv(file = here("Data"))
+#Sample.Info <- read.csv(file = here("Data"))
+Sample.Info <- read_csv(here("Data", "Mo24_LIMEAIDE_respo_meta.csv"))
+SAData <- read_csv(here("Data","Mo24_LIMEAIDE_SA_calced.csv"))
+Sample.Info <- left_join(Sample.Info, SAData, by = "Unique_ID")
 #View(Sample.Info)
 
 ##### Make sure times are consistent ####
@@ -61,12 +64,12 @@ Sample.Info$stop.time <- as.POSIXct(Sample.Info$stop.time,format="%H:%M:%S", tz 
 ###forloop#####
 for (i in 1: length(file.names.full)) {
   FRow<-which(Sample.Info$FileName==strsplit(file.names[i], '.csv')) #stringsplit this renames our file
-  Respo.Data1 <-read_csv(file.path(path.p, file.names.full[i]), skip = 1) %>%
-    select(Time,Value,Temp) %>% # keep only what we need
+  Respo.Data1 <-read_csv(file.path(path.p, file.names.full[i])) %>%
+    dplyr::select(Time,Value,Temp) %>% # keep only what we need
     mutate(Time = as.POSIXct(Time, format="%H:%M:%S", tz = "")) %>% # covert time
     drop_na() # drop NAs
-  
-  Respo.Data1 <- Respo.Data1[-c(1:120),] %>% #we want to start at minute 2 to avoid any noise from the start of the trial
+
+  Respo.Data1 <- Respo.Data1[-c(1:300),] %>% #we want to start at minute 5 to avoid any noise from the start of the trial
        mutate(sec = 1:n())  #create a new column for every second for the regression
 
     #Get the filename without the .csv
@@ -102,7 +105,7 @@ for (i in 1: length(file.names.full)) {
   Regs  <-  rankLocReg(xall=Respo.Data1$sec, yall=Respo.Data1$Value, alpha=0.5, method="pc", verbose=TRUE)  
  
   # Print across two pages so use baseplot to create the pdf
-  pdf(paste0(here("Data_Raw", "Coral", "Metabolism", "PR_initial", "Output", "RespoOutput"),"/", rename,"thinning.pdf"))
+  pdf(paste0(here("Data", "respo_output"),"/", rename,"thinning.pdf"))
   
   p1+p2 # use patchwork to bring the raw and thinned data together
   plot(Regs) # plot the results of Regs
@@ -119,16 +122,12 @@ for (i in 1: length(file.names.full)) {
 
 #export raw data and read back in as a failsafe 
 #this allows me to not have to run the for loop again 
-write_csv(Respo.R, here("Data_Raw",
-                        "Coral",
-                        "Metabolism",
-                        "PR_initial",
+write_csv(Respo.R, here("Data",
+                        "respo_output",
                         "InitialRespo.R.csv"))
 
-Respo.R <- read_csv(here("Data_Raw",
-                         "Coral",
-                         "Metabolism",
-                         "PR_initial",
+Respo.R <- read_csv(here("Data",
+                         "respo_output",
                         "InitialRespo.R.csv"))
 
 # Calculate Respiration rate
@@ -136,9 +135,9 @@ Respo.R <- read_csv(here("Data_Raw",
 Respo.R<-Respo.R %>%
   drop_na(FileName) %>% # drop NAs
   left_join(Sample.Info) %>% # Join the raw respo calcuations with the metadata
-  mutate(umol.sec = umol.L.sec*(volume/1000)) %>% #Account for chamber volume to convert from umol L-1 s-1 to umol s-1. This standardizes across water volumes (different because of coral size) and removes per Liter
+  mutate(umol.sec = umol.L.sec*(Volume_mL/1000)) %>% #Account for chamber volume to convert from umol L-1 s-1 to umol s-1. This standardizes across water volumes (different because of coral size) and removes per Liter
   mutate_if(sapply(., is.character), as.factor) %>% #convert character columns to factors
-  mutate(BLANK = as.factor(BLANK)) #make the blank column a factor
+  mutate(blank_coral = as.factor(blank_coral)) #make the blank column a factor
 
 
 #View(Respo.R)
@@ -149,33 +148,33 @@ Respo.R<-Respo.R %>%
 #View(Respo.R)
 
 Respo.R_Normalized <- Respo.R %>%
-  group_by(Light_Dark, BLANK)%>% # also add block here if one blank per block
+  group_by(Treatment, blank_coral)%>% # also add block here if one blank per block
+  #group_by(blank_coral)%>% # also add block here if one blank per block
   summarise(umol.sec = mean(umol.sec, na.rm=TRUE)) %>%
-  filter(BLANK ==1)%>% # only keep the actual blanks
-  select(Light_Dark, blank.rate = umol.sec) %>% # only keep what we need and rename the blank rate column
+  filter(blank_coral == "blank") %>% # only keep the actual blanks
+  dplyr::select(Treatment, blank.rate = umol.sec) %>% # only keep what we need and rename the blank rate column
   right_join(Respo.R) %>% # join with the respo data %>%
   mutate(umol.sec.corr = umol.sec - blank.rate, # subtract the blank rates from the raw rates
-         mmol.gram.hr = 0.001*(umol.sec.corr*3600)/Surface_area_cm2)  %>% # convert to mmol g hr-1
-  filter(BLANK ==0) %>% # remove all the blank data
-  select(Date, PlateID, CowTagID, Top_Bottom,Light_Dark, Site, Surface_area_cm2, mmol.gram.hr) #keep only what we need
+         mmol.gram.hr.corr = 0.001*(umol.sec.corr*3600)/SA.cm2)  %>% # convert to mmol g hr-1
+  filter(blank_coral == "coral") %>% # remove all the blank data
+  dplyr::select(Date, Treatment, Meso_Treatment, OAE_Treatment, Frag_ID, Colony, Chamber, PAR, SA.cm2, umol.sec, umol.sec.corr, mmol.gram.hr.corr) #keep only what we need
 
 #View(Respo.R_Normalized)
 
 # pivot the data so that light and dark have their own column for net P and R
-Respo.R_Normalized<- Respo.R_Normalized %>%
-  pivot_wider(names_from = Light_Dark, values_from = mmol.gram.hr) %>%
-  rename(Respiration = Dark , NetPhoto = Light) %>% # rename the columns
-  mutate(Respiration = - Respiration, # Make respiration positive
-         GrossPhoto = Respiration + NetPhoto
-         )
+# Respo.R_Normalized<- Respo.R_Normalized %>%
+#   pivot_wider(names_from = Light_Dark, values_from = mmol.gram.hr) %>%
+#   rename(Respiration = Dark , NetPhoto = Light) %>% # rename the columns
+#   mutate(Respiration = - Respiration, # Make respiration positive
+#          GrossPhoto = Respiration + NetPhoto
+#          )
 
 
 
 
 write_csv(Respo.R_Normalized,here("Data",
-                                  "Coral",
-                                  "Metabolism",
-                                  "PR_initial_normalized_2022_06_28.csv"))# export all the uptake rates
+                                  "respo_output",
+                                  "PR_initial_normalized_2024.csv"))# export all the uptake rates
 #View(Respo.R)
 
 
